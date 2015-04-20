@@ -1,0 +1,39 @@
+{% extends "roasted/base_generic.html" %}
+
+{% block title %}{{ section.title }}{% endblock %}
+
+{% block content %}
+{% load bootstrap %}
+
+<div class="table-container">
+  <table class="table table-compact table-bordered">
+   <tr>
+    <th>Key</th>
+    <th>Link</th>
+   </tr>
+   {% for result in results %}
+    <tr>
+        <td>{{ result.key }}</td>
+        <td><a href="{{ result.target_url }}">{{result.target_url}}</a></td>
+    </tr>
+   {% endfor %}
+ </table>
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if results.has_previous %}
+            <a href="?page={{ results.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ results.number }} of {{ results.paginator.num_pages }}.
+        </span>
+
+        {% if results.has_next %}
+            <a href="?page={{ results.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock %}

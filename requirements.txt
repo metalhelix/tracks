@@ -1,0 +1,7 @@
+Django==1.7.4
+django-debug-toolbar==1.2.2
+Fabric==1.10.1
+django-bootstrap-form
+python-dateutil
+django-tastypie
+django-contact-form

@@ -1,0 +1,13 @@
+{% extends "roasted/base_generic.html" %}
+
+{% block title %}{{ section.title }}{% endblock %}
+
+{% block content %}
+{% load bootstrap %}
+
+<div class="container">
+    <h1 class="page-header"> tracks </h1>
+    <h5> A url-shortner and host for genomic track files</h5>
+    <p class="bg-warning" style="padding: 15px;"> Track files indexed here are publicly accessible</p>
+</div>
+{% endblock %}
