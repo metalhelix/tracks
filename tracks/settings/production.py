@@ -14,7 +14,7 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'stowers.org']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.stowers.org']
 
 try:
 	from .local import *
