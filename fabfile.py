@@ -1,4 +1,12 @@
+'''
+SKELETON FABFILE.
 
+This fabfile is NOT currently utilized for deployment, it merely serves as a skeleton
+for what a deployment fabfile could contain. 
+
+Deployment is still handle manually (ssh, git pull, restart uwsgi, restart ngix).
+
+'''
 
 
 def git_pull():

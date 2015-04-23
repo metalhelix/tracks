@@ -55,3 +55,8 @@ python manage.py loaddata ../new_tracks.json
 /etc/init.d/uwsgi start
 # restart nginx
 sudo /sbin/service nginx restart
+
+# add robots.txt to /microarray/robots/robots.txt which contains the following:
+
+User-agent: *
+Disallow: /
