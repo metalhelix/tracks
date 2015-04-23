@@ -1,0 +1,57 @@
+# PRODUCTION deployment notes
+# see /home/bioinfo/.passwords for password information
+
+mkdir -p /etc/nginx/{sites-enabled,sites-available}
+chown deployer sites-enabled sites-available
+
+# create nginx.conf
+# create sites-available/tracks
+# symlinks sites-available/tracks sites-enabled/tracks
+
+mkdir -p /etc/nginx/logs/nginx/tracks/log
+mkdir -p /etc/nginx/logs/nginx/log
+mkdir -p /etc/nginx/logs/domains/tracks/log/
+
+sudo /sbin/service nginx start
+
+# set up database
+sudo -u postgres -s
+/usr/local/pgsql/bin/createdb tracks
+/usr/local/pgsql/bin/createuser -P deployer
+GRANT ALL PRIVILEGES ON DATABASE tracks TO deployer;
+\q
+
+# modify /etc/init.d/uwsgi with appropriate daemon configs
+NAME=uwsgi
+DESC=uwsgi
+TRACKS_WSGI=/microarray/tracks/tracks/wsgi.py
+VENV=/home/deployer/venv/
+
+DAEMON_OPTS="--socket 127.0.0.1:8001 --wsgi-file ${TRACKS_WSGI} -M -t 30 -p 16 -b 32768 -d /var/log/$NAME.log --pidfile /var/run/$NAME/$NAME.pid --uid $OWNER --home=${VENV} --stats 127.0.0.1:9191"
+
+# install virtual env in deployer home
+pip install --user virtualenv
+cd $HOME
+virtualenv venv
+source ~/venv/bin/activate
+pip install -r requirements.txt
+pip install psycopg2
+
+# set production enviromental variable
+PRODUCTION=1
+# set python path
+export PYTHONPATH=/microarray/tracks:$PYTHONPATH
+
+# migrate previous tracks meta data (required changing the name of django model)
+sed -i tracks_redirect.json s/redirect.redirecthit/roasted.redirecthit/g tracks.json
+cat tracks_redirect.json | sed 's/redirect.redirecthit/roasted.redirecthit/g' | sed 's/redirect.target/roasted.target/g' > new_tracks.json
+
+python manage.py syncdb
+
+# import the data into django
+python manage.py loaddata ../new_tracks.json 
+
+# start uwsgi
+/etc/init.d/uwsgi start
+# restart nginx
+sudo /sbin/service nginx restart
