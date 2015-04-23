@@ -1,6 +1,14 @@
 # PRODUCTION deployment notes
 # see /home/bioinfo/.passwords for password information
 
+# Packages installed prior to tracks installation by system administrator
+
+postgresql, nginx, uwsgi (recent source http://uwsgi-docs.readthedocs.org/en/latest/)
+
+# /usr/sbin/nginx -v
+nginx version: nginx/1.7.10
+sudo /sbin/service nginx reload
+
 mkdir -p /etc/nginx/{sites-enabled,sites-available}
 chown deployer sites-enabled sites-available
 
