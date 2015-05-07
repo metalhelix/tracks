@@ -1,41 +1,45 @@
-# PRODUCTION deployment notes
-
- + host: http://tracks.stowers.org
- + uname: Linux tracks.stowers.org 2.6.32-431.29.2.el6.x86_64  +1 SMP Tue Sep 9 21:36:05 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
- + webserver: nginx runs as user nginx,
- + application runs under wsgi as user 'deployer'.
+---
+title: PRODUCTION deployment notes
+host: http://tracks.stowers.org
+uname: Linux tracks.stowers.org 2.6.32-431.29.2.el6.x86_64  +1 SMP Tue Sep 9 21:36:05 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
+webserver: nginx runs as user nginx,
+application runs under wsgi as user 'deployer'.
  + linux    user: deployer; password: c.f. /home/bioinfo/.passwords
  + postgres user: deployer; password: c.f. /home/bioinfo/.passwords
-
- + Required system packages installed by root/system-administrator:
+Required system packages: installed by root/system-administrator:
      +  python
      +  postgresql
      +  nginx
      +  uwsgi (recent source http://uwsgi-docs.readthedocs.org/en/latest/)
+---
+
 
 ```sh
 yum install python # if needed
 sudo yum -y install nginx
 ```
 
-
+deployed using: nginx version: nginx/1.7.10	#
 ```
 /usr/sbin/nginx -v
 ```
 
-#+RESULTS:
-: nginx version: nginx/1.0.15
 
-
-# was deployed using: nginx version: nginx/1.7.10	# 
-
-## Python database is used for storage.
+## Python database
+is used for storage.
+```sh
 sudo yum -y install postgresql postgresql-devel 
+```
 
-## sqlite is used during development (i.e. when envirtonment variable
-## PRODUCTION is unset).  Install it also on production server to
-## enable testing/debugging:
+## sqlite
+
+is used during development (i.e. when envirtonment variable
+PRODUCTION is unset).  Install it also on production server to
+enable testing/debugging.
+
+```
 sudo yum -y install sqlite-devel
+```
 
 pip install uwsgi 
 ### NB: uwsgi is NOT installed inside the venv but rather with the
