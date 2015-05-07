@@ -1,7 +1,7 @@
-* PRODUCTION deployment notes
+# PRODUCTION deployment notes
 
- + Deployed as http://tracks.stowers.org
- + host: Linux tracks.stowers.org 2.6.32-431.29.2.el6.x86_64  +1 SMP Tue Sep 9 21:36:05 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
+ + host: http://tracks.stowers.org
+ + uname: Linux tracks.stowers.org 2.6.32-431.29.2.el6.x86_64  +1 SMP Tue Sep 9 21:36:05 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
  + webserver: nginx runs as user nginx,
  + application runs under wsgi as user 'deployer'.
  + linux    user: deployer; password: c.f. /home/bioinfo/.passwords
@@ -13,15 +13,15 @@
      +  nginx
      +  uwsgi (recent source http://uwsgi-docs.readthedocs.org/en/latest/)
 
-#+BEGIN_SRC sh
+```sh
 yum install python # if needed
 sudo yum -y install nginx
-#+END_SRC
+```
 
 
-#+BEGIN_SRC sh :session *shell* :results output :exports both
+```
 /usr/sbin/nginx -v
-#+END_SRC
+```
 
 #+RESULTS:
 : nginx version: nginx/1.0.15
