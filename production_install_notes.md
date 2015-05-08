@@ -1,8 +1,12 @@
 # Overview
 
 This document describes the Stowers 'tracks' server, which was
-developed by Sam Meier with requirements and encouragement from
-<Chris_Seidel@stowers.org>.
+developed by <Sam.Meier@gmail.com> with requirements and encouragement
+from <Chris_Seidel@stowers.org>.  It is currently administered jointly
+between <Jenny_McGee@stowers.org> and <Malcolm_Cook@stowers.org>.  The
+document started as Sam's leave-behind, and have been added to by
+Malcolm as he reviewed the application's deployment and overcame some
+of the ISSUES identified herein.
 
 This project, and this file, is on github at
 <https://github.com/metalhelix/tracks>.  It is private - you need to
@@ -18,14 +22,7 @@ use of the url shortening service is entirely optional.  The content
 is generally hidden from directory browsing and from indexing by
 robots.
 
-It is a django application running under nginx/uwsgi.
-
-It is currently administered jointly between
-<mailto:Jenny_McGee@stowers.org> and <mailto:Malcolm_Cook@stowers.org>
-
-These notes started as Sam's leave-behind, and have been added to by
-Malcolm as he reviewed the application's deployment and overcame some
-of the ISSUES identified herein.
+Tracks is a django application running under nginx/uwsgi.
 
 # Server Configuration
 
