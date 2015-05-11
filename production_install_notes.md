@@ -1,17 +1,5 @@
 # Overview
 
-This document describes the Stowers 'tracks' server, which was
-developed by <Sam.Meier@gmail.com> with requirements and encouragement
-from <Chris_Seidel@stowers.org>.  It is currently administered jointly
-between <Jenny_McGee@stowers.org> and <Malcolm_Cook@stowers.org>.  The
-document started as Sam's leave-behind, and have been added to by
-Malcolm as he reviewed the application's deployment and overcame some
-of the ISSUES identified herein.
-
-This project, and this file, is on github at
-<https://github.com/metalhelix/tracks>.  It is private - you need to
-be a member of <https://github.com/metalhelix> to view.
-
 <http://tracks.stowers.org> is "a url-shortner and host for genomic
 track files". Track file content is hosted on outward-facing server so
 it might be rendered in the ucsc genome browser.  There is no hard
@@ -22,9 +10,23 @@ use of the url shortening service is entirely optional.  The content
 is generally hidden from directory browsing and from indexing by
 robots.
 
-Tracks is a django application running under nginx/uwsgi.
+This document describes the development and deployment of the 'tracks'
+server. It was developed by <Sam.Meier@gmail.com> with requirements
+and encouragement from <Chris_Seidel@stowers.org>.  It is currently
+administered jointly between <Jenny_McGee@stowers.org> and
+<Malcolm_Cook@stowers.org>.  The document started as Sam's
+leave-behind, and has been added to by Malcolm as he reviewed the
+application's deployment and overcame some of the ISSUES identified
+herein.
+
+This project, and this file, is on github at
+<https://github.com/metalhelix/tracks>.  It is private - you need to
+be a member of <https://github.com/metalhelix> to view.
 
 # Server Configuration
+
+Tracks is a django application running under nginx/uwsgi.
+
 
 ```{.bash}
 sudo yum -y install python # if needed
@@ -106,7 +108,12 @@ Disallow: /
  + /etc/init.d/uwsgi (TODO: as installed by ??? - apparently not by
  yum install uwsgi)
 
-Key modifications:
+Key modifications
+
++ have it log, with rotation, to /var/log/uwsgi/uwsgi.log in directory
+  created with ownership by deployer, allowing log rotation to not
+  fail (as it would if the log directory were owned by root).
+
 
 ```{.bash}
 OWNER=deployer
@@ -117,6 +124,7 @@ VENV=/home/deployer/venv/
 
 DAEMON_OPTS="--socket 127.0.0.1:8001 --wsgi-file ${TRACKS_WSGI} -M -t 30 -p 16 -b 32768 -d /var/log/$NAME.log --pidfile /var/run/$NAME/$NAME.pid --uid $OWNER --home=${VENV} --stats 127.0.0.1:9191"
 DAEMON_OPTS+=" --env PRODUCTION=1"  # this had been missing.
+
 ```
 
 
@@ -148,7 +156,8 @@ pip install pysqlite		# needed when PRODUCTION is unset (developing and debuggin
 deactivate
 ```
 
-WARNING: __You need not install any python modules outside of this virtual environment.__
+WARNING: __You need not install any python modules outside of this
+virtual environment.__
 
 ## Enviroment variables
 
@@ -337,6 +346,36 @@ sudo /sbin/service uwsgi start
 pandoc  -s -S --toc -c http://pandoc.org/demo/pandoc.css --read=markdown -o production_install_notes.html  production_install_notes.md
 ```
 
+## enable blat for assembly hugs
+
+The tracks server can be configured to
++ host [track data hubs](https://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html)
++ host [assembly hubs](https://genome.ucsc.edu/goldenPath/help/hubQuickStartAssembly.html)
++ [enable blat for use with an assembly hub](https://genome.ucsc.edu/goldenPath/help/hubQuickStartAssembly.html#blat)
+
+The first (and currently only) genome assembly hub served by tracks is
+[Schmidtea mediterranea](http://tracks/cws/schMed/hub.txt)
+
+As can be seen in the
+[genomes.txt](http://tracks/cws/schMed/genomes.txt) file, four ports
+are allocated, in the range 17770-17773.
+
++ ISSUE: for gfserver on tracks.stowers.org to respond to blat queries
+  coming from genome.ucsc.edu, those ports needed to be opened to
+  requests by IT for querys coming from 128.114.119.0/24.  TODO: have
+  IT open up a range for use by gfServers to be allocated as needed.
++ ISSUE: gfServers start up is manual!  The gfServer (blat server) was
+  started by hand.  TODO: start as a service on boot. PROPOSAL: scan
+  all genomes.txt files for commented out calls to gfServer and
+  execute them. 
++ ISSUE: The assignment of ports to servers is by hand.  TODO: figure out how
+  to assign next available port number?  HOW: by 
+    + shut down all gfServers
+    + batch stream edit all genomes.txt files, sequentially
+    	+ re-setting the port argument to blat and transBlat calls 
+        +  provide a commented out call to gfServer, if missing
+    +  gfServers start up
+
 # RESOLVED ISSUES
 
 The following ISSUES were identified and resolved by Malcolm and Jenny
@@ -426,81 +465,37 @@ some other reason?
 
 
 
-# OPEN ISSUES
 
-## configuration details are not backed up
+## ownership on /var/log/nginx/* and /etc/nginx/logs/nginx/log/access.log is incorrect.
 
-Should we back up or copy somewhere the details configuration files?
-
-## resolve remaining permissions/logfile
-
-email to Jenny:
-
-I think the ownership on /var/log/nginx/* and
-/etc/nginx/logs/nginx/log/access.log is incorrect.
-
-Can you remind me why we changed them to be owned by deployer earlier
-in this thread?  Any good reason?
-
-I think they probably need to owned by user nginx since the web worker
-processes are running as user nginx.
-
-As a result the access log is empty.
-
-If you agree, would you change them please:
+RESOLUTION:
 
     chown -R nginx /var/log/nginx /etc/nginx/logs/nginx/log/access.log
 
 and make the corresponding changes to /etc/logrotate.d/nginx
 
-And, if you agree, while you’re editing the logrotate, you should
-change the path to the nginx.pid file as well (which you will note is
-owned by root).  If we don’t change it, then log rotation will cause
-subsequent nginx logging to fail.
+## Uswgi logs should be rotated too.
 
-I think having logs owned by deployer makes sense for the uswgi logs
-since that process IS running as user deployer.  But not the nginx
-logs.  Do you agree?
+Uwsgi has its own built in log rotation scheme which can be enabled by
+adding `--log-maxsize 100000000` to DAEMON_OPTs.  But think this is
+going to pose a problem since regardless of how implemented,
+logrotation will need to create a new file in /var/log but deployer
+lacks permisions for this.  Other
+[approaches are available](http://stackoverflow.com/questions/21515070/uwsgi-logging-not-working-if-log-file-is-removed)
+for logging in UWSGI.
 
-Regarding this, I cannot see where the nginx uid/user is set.  The
-‘user’ configuration directive in ‘nginx.conf’ (which would set it to
-www-data) is commented out.  And the documentation I am seeing says
+RESOLUTION: `mkdir /var/log/uwsgi` owned by deployer and put the
+log(s) there and add `--log-maxsize 100000000` to DAEMON_OPTs
+
+# OPEN ISSUES
+## where the nginx uid/user is set is unclear.
+
+The ‘user’ configuration directive in ‘nginx.conf’ (which would set it
+to www-data) is commented out.  And the documentation I am seeing says
 the default is ‘nobody’.  Do you know where this is set?  And, did you
 have to create a user named nginx?
 
-I am reviewing all this in the context of the deployed processes begin
-split between nginx (for the web) and deployer (for the app).  If you
-find a good write-up on how this should generally be done, I’d like to
-see it.  I think some of our problems stem from this, and some from
-having relocated some of the log files.
+## configuration details are not backed up
 
-FYI: Uswgi also creates logs.  They should be rotated too.  Uwsgi has
-its own built in log rotation scheme which can be enabled by adding
-`--log-maxsize 100000000` to DAEMON_OPTs.  But think this is going to
-pose a problem since regardless of how implemented, logrotation will
-need to create a new file in /var/log but deployer lacks permisions
-for this.  Should we `mkdir /var/log/uwsgi` owned by deployer and put
-the log(s) there?
+Should we back up or copy somewhere the details configuration files?
 
-## confirm process managemnet practice with Jenny
-
-Finally, you wrote earlier:
-
-    /sbin/service nginx stop
-    /sbin/service uwsgi stop
-    /sbin/service uwsgi start
-    /sbin/service nginx start
-
-"Don't use sudo in front of these commands."
-
-I think that this is wrong, at least it is wrong now, since they are
-currently being run as root (i.e. during boot), you MUST you sudo.  Do
-you agree?
-
-
-## share this project repo with Jenny
-
-Jenny -perhaps you cannot see it there since it is ‘private’.  Can
-you?  If not, should we get you a membership to the metalhelix github
-group?  I think so.  Do you?  If so, do you already have a personal
-github account which we can put into the group?
